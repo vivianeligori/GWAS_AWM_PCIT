@@ -1,0 +1,53 @@
+#parameter card for running preGS
+DATAFILE
+PESO_AOL.dat
+TRAITS
+8 9
+FIELDS_PASSED TO OUTPUT
+
+WEIGHT(S)
+
+RESIDUAL_VARIANCE
+826.99       87.131    
+87.131       29.449  
+EFFECT
+3 3 cross alpha  
+EFFECT
+4 4 cov 
+EFFECT
+5 5 cov 
+EFFECT
+6 0 cov 
+EFFECT
+0 7 cov   
+EFFECT
+1 1 cross alpha 
+RANDOM   
+animal 
+OPTIONAL
+ 
+FILE
+PED_CARACU_ALT.prn
+FILE_POS
+1 2 3 0 0
+SNP_FILE
+G1RG2G3
+PED_DEPTH
+0
+(CO)VARIANCES
+   300.62       29.592    
+   29.592       11.542 
+OPTION remove_all_missing
+OPTION map_file snp_map
+OPTION minfreq 0.05
+OPTION monomorphic
+OPTION callrate 0.90
+OPTION callrateAnim 0.90
+OPTION hwe 0.15
+OPTION verify_parentage 3
+OPTION excludeCHR 30 31 32 33
+OPTION saveCleanSNPs
+OPTION saveDiagGOrig
+OPTION saveHinvOrig
+OPTION use_yams
+OPTION AlphaBeta 0.95 0.05
