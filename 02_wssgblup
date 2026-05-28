@@ -1,0 +1,71 @@
+#renf90.par - BLUPF90 + postGS
+# BLUPF90 parameter file created by RENUMF90
+DATAFILE
+ renf90.dat
+NUMBER_OF_TRAITS
+           1
+NUMBER_OF_EFFECTS
+           5
+OBSERVATION(S)
+    1
+WEIGHT(S)
+ 
+EFFECTS: POSITIONS_IN_DATAFILE NUMBER_OF_LEVELS TYPE_OF_EFFECT[EFFECT NESTED]
+ 2       349 cross 
+ 3 1 cov 
+ 4 1 cov 
+ 5 1 cov 
+ 6      4786 cross 
+RANDOM_RESIDUAL VALUES
+833.15     
+ RANDOM_GROUP
+     5
+ RANDOM_TYPE
+ add_an_upginb
+ FILE
+renadd05.ped                                                                    
+(CO)VARIANCES
+302.56    
+OPTION SNP_file genotipo_final_recodificado.txt_clean
+OPTION no_quality_control
+OPTION map_file snp_map_clean
+OPTION windows_variance 100
+OPTION snp_p_value
+OPTION saveGInverse
+#OPTION weightedG wei.txt
+
+#Plot - R software
+#install.packages("CMplot")
+library("CMplot") 
+
+snpvar<-read.table("chrsnpvar")
+head(snpvar)
+#1: trait
+#2: effect
+#3: variance explained by n adjacents SNP
+#4: SNP
+#5: Chromosome
+#6: Position
+
+colnames(snpvar)<-c("trait",
+                    "effect",
+                    "var",
+                    "SNP",
+                    "Chr",
+                    "Pos")
+var<-snpvar[c(4:6,3)]
+head(var)
+
+
+CMplot(var, plot.type="m", band=0.5, LOG10=FALSE, ylab="% variance", amplify=F, 
+       width=10,height=5,signal.col=NULL, chr.den.col=NULL, file="jpg",
+       dpi=300,file.output=TRUE,
+       verbose=TRUE,cex=0.6,
+       threshold=1,threshold.lty=2,
+       threshold.lwd=1, threshold.col="red")
+
+
+
+
+
+
