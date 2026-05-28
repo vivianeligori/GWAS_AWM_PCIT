@@ -1,0 +1,114 @@
+#AWM - R software
+# **1. Initial setup and file loading**
+
+# Set the working directory where the files are located
+# (Update this path to your local directory or use "." for the current folder)
+setwd("C:/VIVIANE/MANUSCRITO2_GWAS/FINAL/AWM")
+
+# Load the required files:
+# - "AWM_P.txt": Contains the variance explained by SNP for different phenotypes.
+AWM_P <- read.table("AWM_P.txt", header = TRUE, row.names = 1)
+
+# - "AWM_A.txt": Contains the SNP effects on different traits.
+AWM_A <- read.table("AWM_A.txt", header = TRUE, row.names = 1)
+
+# - "GENOME_MAP.txt": Genomic map of SNPs, with location and distance information.
+GenomeMap <- read.table("GENOME_MAP.txt", header = TRUE)
+
+# Ensure that the 'distance' column in the genomic map is in numeric format
+GenomeMap$distance <- as.numeric(as.character(GenomeMap$distance))  
+
+# Define the key phenotype for the analysis. This should be adjusted according to the study.
+KeyPhenotype <- "BW"  # Replace with the correct key phenotype.
+
+# Sub-scenarios defined as percentages of SNPs to be analyzed (e.g., top 1%, 2%, 5%, etc.).
+subcenarios <- c(0.05)
+
+# Initialize lists to store results of selected SNPs and AWM matrices.
+selected_snps <- list()  # List to store selected SNPs per sub-scenario.
+awm_matrices <- list()   # List to store the generated AWM matrices.
+
+# **2. Install and load required packages**
+
+# Load essential packages (adapt according to the packages used)
+library(rentrez)  # To access genomic information from online databases.
+library(Map2NCBI) # To handle and map SNPs to genes in public databases.
+
+# **3. Iterate over sub-scenarios for SNP selection**
+
+# For each sub-scenario (SNP percentage), select the SNPs with the highest explained variance.
+for (perc in subcenarios) {
+  cat("Processing sub-scenario with top", perc * 100, "% of SNPs\n")
+  
+  # Determine the number of SNPs to select based on the percentage
+  n_top_snps <- ceiling(perc * nrow(AWM_P))
+  
+  # Select the SNPs with the highest explained variance for the key phenotype
+  top_snps <- head(rownames(AWM_P[order(AWM_P[[KeyPhenotype]], decreasing = TRUE), ]), n_top_snps)
+  
+  # Store the selected SNPs in the list
+  selected_snps[[paste0("Top", perc * 100, "%")]] <- top_snps
+}
+
+# **4. Filtering based on genomic map and SNP classification**
+
+# Process the selected SNPs for each sub-scenario.
+for (scenario in names(selected_snps)) {
+  cat("Processing selected SNPs for scenario:", scenario, "\n")
+  
+  # Get the selected SNPs for the current scenario
+  snps_in_scenario <- selected_snps[[scenario]]
+  
+  # Filter the genomic map to include only the selected SNPs
+  filtered_map <- GenomeMap[GenomeMap$SNP %in% snps_in_scenario, ]
+  
+  # Classify SNPs based on their distance to genes
+  filtered_map$distance_category <- cut(
+    filtered_map$distance,  # Distance column
+    breaks = c(-Inf, 10000, 300000, Inf),  # Thresholds for categories
+    labels = c("close", "far", "very_far")  # Distance categories
+  )
+  
+  # Remove duplicates, keeping SNPs in the "close" category with higher priority
+  filtered_map <- filtered_map[order(filtered_map$distance_category == "close", decreasing = TRUE), ]
+  filtered_map <- filtered_map[!duplicated(filtered_map$SNP), ]
+  
+  # Separate SNPs into distance categories for detailed analyses
+  close_snps <- subset(filtered_map, distance_category == "close")
+  far_snps <- subset(filtered_map, distance_category == "far")
+  very_far_snps <- subset(filtered_map, distance_category == "very_far")
+  
+  # Combine SNPs from "close" and "very_far" categories for subsequent analysis
+  filtered_snps <- rbind(close_snps, very_far_snps)
+  
+  # Add information about the closest gene based on distance
+  filtered_snps$closest_gene <- filtered_snps$distance  # Update if necessary.
+  
+  # **5. AWM Construction**
+  
+  # Select the effects of the filtered SNPs to construct the AWM matrix
+  awm_matrix <- AWM_A[filtered_snps$SNP, ]
+  
+  # Normalize the effects (z-score) for each trait
+  awm_matrix <- scale(awm_matrix)
+  
+  # Store the generated AWM matrix in the list
+  awm_matrices[[scenario]] <- awm_matrix
+  
+  # Export the AWM matrix for the sub-scenario to a file
+  write.table(awm_matrix, paste0("AWM_", scenario, ".txt"), row.names = TRUE, quote = FALSE, sep = "\t")
+}
+
+# **6. Export selected SNPs and AWM matrices**
+
+# Export selected SNPs for each scenario as text files
+for (scenario in names(selected_snps)) {
+  write.table(selected_snps[[scenario]], paste0("Selected_SNPs_", scenario, ".txt"), row.names = FALSE, quote = FALSE, sep = "\t")
+}
+
+# Final completion message
+cat("Analyses completed. AWM matrices and selected SNPs saved.\n")
+
+# Show the first few SNPs in the last processed scenario
+cat("SNPs in the current scenario:\n")
+print(head(snps_in_scenario))
