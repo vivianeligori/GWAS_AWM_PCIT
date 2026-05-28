@@ -1,0 +1,25 @@
+# Run the executable
+
+gfortran PCIT.f90 -o PCIT.exe
+
+echo Step7PCIT.txt_INPUT.txt | ./PCIT.exe
+
+
+# Get the significant pairs from out.txt PCIT output file 
+
+
+awk '$4!=0.00000 {print$1, $2, $3, ($3<0?"NEG":"POS")}' Step7PCIT.txt_INPUT.txt_out  > PCIT_sig.txt
+
+# Count the number of rows
+
+wc -l PCIT_sig.txt
+
+
+# Get the pair with |r| >= 0.9
+
+
+awk '$3 < -0.90 || $3 > 0.90' PCIT_sig.txt > res.PCIT_sig_0_9
+
+# Count the number of rows
+
+wc -l res.PCIT_sig_0_9
